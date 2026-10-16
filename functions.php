@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('TESRA_VERSION','1.8.5');
+define('TESRA_VERSION','1.8.6');
 define('TESRA_DEMO_CATALOG_VERSION',4);
 
 
@@ -325,11 +325,12 @@ function tesra_seed_demo_subcategories(){
 add_action('init','tesra_seed_demo_subcategories',30);
 
 function tesra_enable_demo_reviews(){
- if(!class_exists('WooCommerce')) return;
+ if(!class_exists('WooCommerce') || get_option('tesra_demo_reviews_enabled')) return;
  $ids=get_posts(['post_type'=>'product','post_status'=>'publish','numberposts'=>-1,'fields'=>'ids','meta_query'=>[['key'=>'_sku','value'=>'TESRA-DEMO-','compare'=>'LIKE']]]);
  foreach($ids as $id){if(get_post_meta($id,'_reviews_allowed',true)==='')update_post_meta($id,'_reviews_allowed','yes');}
+ update_option('tesra_demo_reviews_enabled',1,false);
 }
-add_action('init','tesra_enable_demo_reviews',30);
+add_action('admin_init','tesra_enable_demo_reviews',30);
 
 function tesra_register_elementor_locations($manager){
  if(method_exists($manager,'register_all_core_location')) $manager->register_all_core_location();
@@ -407,8 +408,10 @@ function tesra_product_card($product,$rank=0,$stock=false){
  $id=$product->get_id();
  $price=$product->get_price();
  $regular=$product->get_regular_price();
- $sale=$product->is_on_sale();
- $disc=($regular&&$price<$regular)?round(100-(floatval($price)/floatval($regular)*100)):0;
+ $sale_price=$product->get_sale_price();
+ $reg_num=(float)$regular;
+ $price_num=(float)$price;
+ $disc=($reg_num>0 && $price_num>0 && $sale_price!=='' && $price_num<$reg_num)?(int)round(100-($price_num/$reg_num*100)):0;
  $shape=['150px 150px 28px 28px','4px 90px 4px 90px','50% 50% 28px 28px/36% 36% 28px 28px','60px','90px 28px 90px 28px','28px 28px 120px 28px','120px 28px 28px 28px','50px 50px 28px 28px'][$id%8];
  $cat='';
  $terms=get_the_terms($id,'product_cat');
@@ -529,11 +532,13 @@ function tesra_request_sms_reset_ajax(){
  check_ajax_referer('tesra_nonce','nonce');
  $phone=tesra_normalize_phone(sanitize_text_field(wp_unslash($_POST['phone']??'')));
  if(strlen($phone)<10||strlen($phone)>15) wp_send_json_error(['message'=>'شماره موبایل را به‌درستی وارد کنید.']);
+ $key=tesra_sms_reset_key($phone);
+ $existing=get_transient($key);
+ if(is_array($existing) && !empty($existing['sent_at']) && (time()-(int)$existing['sent_at'])<60) wp_send_json_error(['message'=>'لطفاً ۱ دقیقه صبر کنید و سپس دوباره درخواست کد بدهید.']);
  $user=tesra_user_by_phone($phone);
  if(!$user) wp_send_json_error(['message'=>'حسابی با این شماره پیدا نشد. شماره ثبت‌شده در حساب را بررسی کنید.']);
  $code=(string)wp_rand(100000,999999);
- $key=tesra_sms_reset_key($phone);
- set_transient($key,['user_id'=>(int)$user->ID,'code_hash'=>wp_hash_password($code),'attempts'=>0],10*MINUTE_IN_SECONDS);
+ set_transient($key,['user_id'=>(int)$user->ID,'code_hash'=>wp_hash_password($code),'attempts'=>0,'sent_at'=>time()],10*MINUTE_IN_SECONDS);
  $sent=(bool)apply_filters('tesra_send_sms_reset_code',false,$phone,$code,(int)$user->ID);
  if($sent){wp_send_json_success(['message'=>'کد تأیید به شماره موبایل شما پیامک شد.','phone'=>$phone,'demo_mode'=>false]);}
  if(tesra_is_local_environment()){
@@ -582,7 +587,7 @@ add_action('wp_ajax_nopriv_tesra_set_sms_reset_password','tesra_set_sms_reset_pa
 
 function tesra_contact_ajax(){
  check_ajax_referer('tesra_nonce','nonce');
- $name=sanitize_text_field(wp_unslash($_POST['name']??''));$email=sanitize_email(wp_unslash($_POST['email']??''));$subject=sanitize_text_field(wp_unslash($_POST['subject']??''));$msg=sanitize_textarea_field(wp_unslash($_POST['msg']??''));
+ $name=sanitize_text_field(wp_unslash($_POST['name']??''));$email=str_replace(["\r","\n"],'',sanitize_email(wp_unslash($_POST['email']??'')));$subject=sanitize_text_field(wp_unslash($_POST['subject']??''));$msg=sanitize_textarea_field(wp_unslash($_POST['msg']??''));
  if(!$name||!is_email($email)||!$subject||!$msg) wp_send_json_error(['message'=>'لطفاً همه فیلدها را کامل کنید.']);
  wp_mail(get_option('admin_email'),'تماس جدید: '.$subject,$msg."\n\nنام: ".$name."\nایمیل: ".$email,['Reply-To: '.$email]);
  wp_send_json_success(['message'=>'پیام شما ارسال شد.']);
@@ -601,7 +606,12 @@ add_action('wp_ajax_tesra_newsletter','tesra_newsletter_ajax');
 add_action('wp_ajax_nopriv_tesra_newsletter','tesra_newsletter_ajax');
 
 function tesra_save_comment_rating($comment_id){
- if(isset($_POST['rating'])) update_comment_meta($comment_id,'rating',max(1,min(5,(int)$_POST['rating'])));
+ if(isset($_POST['rating'])){
+  $rating=max(1,min(5,(int)wp_unslash($_POST['rating'])));
+  update_comment_meta($comment_id,'rating',$rating);
+  $comment=get_comment($comment_id);
+  if($comment && class_exists('WC_Comments')) WC_Comments::clear_transients((int)$comment->comment_post_ID);
+ }
 }
 add_action('comment_post','tesra_save_comment_rating');
 
@@ -636,15 +646,13 @@ add_filter('woocommerce_add_to_cart_fragments',function($fragments){
  return $fragments;
 });
 
-function tesra_ensure_articles_page(){
+function tesra_ensure_core_pages(){
+ if(get_option('tesra_core_pages_ensured')===TESRA_VERSION) return;
  if(!get_page_by_path('articles')) tesra_page('articles','مقالات');
-}
-add_action('init','tesra_ensure_articles_page',5);
-
-function tesra_ensure_forgot_password_page(){
  if(!get_page_by_path('forgot-password')) tesra_page('forgot-password','فراموشی رمز عبور');
+ update_option('tesra_core_pages_ensured',TESRA_VERSION,false);
 }
-add_action('init','tesra_ensure_forgot_password_page',6);
+add_action('init','tesra_ensure_core_pages',5);
 
 function tesra_seed_demo_articles(){
  if((int)get_option('tesra_demo_articles_version',0)>=2) return;
@@ -937,11 +945,6 @@ function tesra_customize_register($wp_customize){
  foreach([['tesra_license_1_image','تصویر مجوز اول'],['tesra_license_2_image','تصویر مجوز دوم']] as $image){$wp_customize->add_setting($image[0],['default'=>0,'sanitize_callback'=>'absint']);$wp_customize->add_control(new WP_Customize_Image_Control($wp_customize,$image[0],['section'=>'tesra_footer_settings','label'=>$image[1]]));}
 }
 add_action('customize_register','tesra_customize_register');
-
-add_filter('woocommerce_checkout_fields',function($fields){
- if(isset($fields['billing']['billing_country'])) unset($fields['billing']['billing_country']);
- return $fields;
-},20);
 
 add_filter('woocommerce_checkout_posted_data',function($data){
  $store=(string)get_option('woocommerce_default_country','IR');$store=explode(':',$store)[0]?:'IR';

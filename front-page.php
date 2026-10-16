@@ -3,7 +3,12 @@ $sale=$best=$pop=$new=[]; if(class_exists('WooCommerce')){ $sale=tesra_shop_prod
 $cats=tesra_categories();
 $heroImageId=absint(get_theme_mod('tesra_home_hero_image',0));
 $heroImage=$heroImageId?wp_get_attachment_image_url($heroImageId,'full'):'';
-if(!$heroImage)$heroImage=tesra_demo_media_url('hero-banner','https://images.pexels.com/photos/7168108/pexels-photo-7168108.jpeg?cs=srgb&dl=pexels-curtis-adams-1694007-7168108.jpg&fm=jpg','بنر اصلی فروشگاه','large');
+if(!$heroImage){
+ $cachedHero=(int)get_option('tesra_demo_media_url_hero-banner',0);
+ $heroImage=($cachedHero && wp_get_attachment_image_url($cachedHero,'large'))?wp_get_attachment_image_url($cachedHero,'large'):tesra_demo_asset('banners/hero-banner.jpg');
+}
+$cachedPromo=(int)get_option('tesra_demo_media_url_promo-banner',0);
+$promoUrl=($cachedPromo && wp_get_attachment_image_url($cachedPromo,'large'))?wp_get_attachment_image_url($cachedPromo,'large'):tesra_demo_asset('banners/promo-banner.jpg');
 $bestImageId=absint(get_theme_mod('tesra_home_best_image',0));
 $bestImage=$bestImageId?wp_get_attachment_image_url($bestImageId,'full'):'';
 $saleImageId=absint(get_theme_mod('tesra_home_sale_image',0));
@@ -20,7 +25,7 @@ $saleStyle=$saleImage?'background-image:linear-gradient(120deg,rgba(35,26,74,.72
 <div class="rail" id="<?php echo esc_attr($id); ?>"<?php echo $cw?' style="--cw:'.$cw.'px"':''; ?>><?php foreach($products as $i=>$p) echo tesra_product_card($p,$rank?$i+1:0,$stock); ?></div></div></section><?php }
 tesra_home_rail('rhot','تخفیف‌های داغ','فرصت محدود؛ قبل از تمام شدن زمان خرید کنید',$sale,true,false);
 ?>
-<section class="promos"><div class="pm pa"><img class="promo-art" src="<?php echo esc_url(tesra_demo_media_url('promo-banner','https://images.pexels.com/photos/23228196/pexels-photo-23228196.jpeg?cs=srgb&dl=pexels-olenkabohovyk-23228196.jpg&fm=jpg','بنر تبلیغاتی فروشگاه','large')); ?>" alt="پیشنهاد ویژه فروشگاه"><span class="blob"></span><span class="blob"></span><h3>پیشنهاد ویژه فروشگاه</h3><p>منتخب کالاهای دیجیتال و لوازم روزمره با قیمت ویژه</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">خرید با تخفیف</a></div><div class="pm pb"><span class="blob"></span><span class="blob"></span><h3>تجهیزات خانه و زندگی</h3><p>لوازم خانگی و محصولات کاربردی برای خانه‌ای مدرن</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">مشاهده محصولات</a></div></section>
+<section class="promos"><div class="pm pa"><img class="promo-art" src="<?php echo esc_url($promoUrl); ?>" alt="پیشنهاد ویژه فروشگاه"><span class="blob"></span><span class="blob"></span><h3>پیشنهاد ویژه فروشگاه</h3><p>منتخب کالاهای دیجیتال و لوازم روزمره با قیمت ویژه</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">خرید با تخفیف</a></div><div class="pm pb"><span class="blob"></span><span class="blob"></span><h3>تجهیزات خانه و زندگی</h3><p>لوازم خانگی و محصولات کاربردی برای خانه‌ای مدرن</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">مشاهده محصولات</a></div></section>
 <?php tesra_home_rail('rbest','پرفروش‌ترین‌ها','کالاهایی که بیشترین خرید را داشته‌اند',$best,false,true); tesra_home_rail('rpop','محبوب‌ترین‌ها','بالاترین امتیاز از نگاه خریداران',$pop,false,false,'220'); ?>
 <section class="sec"><div class="sh"><div class="ttl"><h2>جدیدترین محصولات</h2><p>تازه‌ترین کالاهای فروشگاه</p></div><a class="more" href="<?php echo esc_url(tesra_url('shop')); ?>">مشاهده همه <i data-i="chevL"></i></a></div><div class="grid"><?php foreach($new as $p) echo tesra_product_card($p); ?></div></section>
 <?php get_footer(); ?>

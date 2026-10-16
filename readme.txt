@@ -1,5 +1,5 @@
 === Tessera Store ===
-Version: 1.8.2
+Version: 1.8.6
 Typography: Vazir font loaded from CDN and applied across theme, WooCommerce and Elementor content while retaining responsive component sizes.
 
 RTL WooCommerce-ready classic theme with responsive hierarchical category mega menu, front-end account views, product reviews, searchable paginated article archive, branded loading indicator and redesigned footer.
@@ -23,3 +23,10 @@ Version 1.8.2
 - Added phone-based password-reset screens with expiring one-time codes and local-only test codes; real SMS needs provider integration.
 - Routed product search to the styled WooCommerce product-results template and added a designed empty-results state.
 - Improved footer license placeholders without representing them as official issued certifications.
+
+Version 1.8.6
+- Improved product rating stars and switched product feedback to the theme comment template.
+- Refined comment submission for signed-in users and refreshed product/gallery and WooCommerce notice styling.
+- Reduced repeated demo-review setup, added password-reset request throttling, and sanitized contact reply-to input.
+- Switched default homepage banner fallbacks to bundled local demo assets and refined UI transitions.
+
