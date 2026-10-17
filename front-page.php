@@ -26,6 +26,6 @@ $saleStyle=$saleImage?'background-image:linear-gradient(120deg,rgba(35,26,74,.72
 tesra_home_rail('rhot','تخفیف‌های داغ','فرصت محدود؛ قبل از تمام شدن زمان خرید کنید',$sale,true,false);
 ?>
 <section class="promos"><div class="pm pa"><img class="promo-art" src="<?php echo esc_url($promoUrl); ?>" alt="پیشنهاد ویژه فروشگاه"><span class="blob"></span><span class="blob"></span><h3>پیشنهاد ویژه فروشگاه</h3><p>منتخب کالاهای دیجیتال و لوازم روزمره با قیمت ویژه</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">خرید با تخفیف</a></div><div class="pm pb"><span class="blob"></span><span class="blob"></span><h3>تجهیزات خانه و زندگی</h3><p>لوازم خانگی و محصولات کاربردی برای خانه‌ای مدرن</p><a class="btn dk" href="<?php echo esc_url(tesra_url('shop')); ?>">مشاهده محصولات</a></div></section>
-<?php tesra_home_rail('rbest','پرفروش‌ترین‌ها','کالاهایی که بیشترین خرید را داشته‌اند',$best,false,true); tesra_home_rail('rpop','محبوب‌ترین‌ها','بالاترین امتیاز از نگاه خریداران',$pop,false,false,'220'); ?>
+<?php tesra_home_rail('rbest','پرفروش‌ترین‌ها','کالاهایی که بیشترین خرید را داشته‌اند',$best,false,true); tesra_home_rail('rpop','محبوب‌ترین‌ها','بالاترین امتیاز از نگاه خریداران',$pop,false,false,'248'); ?>
 <section class="sec"><div class="sh"><div class="ttl"><h2>جدیدترین محصولات</h2><p>تازه‌ترین کالاهای فروشگاه</p></div><a class="more" href="<?php echo esc_url(tesra_url('shop')); ?>">مشاهده همه <i data-i="chevL"></i></a></div><div class="grid"><?php foreach($new as $p) echo tesra_product_card($p); ?></div></section>
 <?php get_footer(); ?>

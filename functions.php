@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-define('TESRA_VERSION','1.8.6');
+define('TESRA_VERSION','1.8.7');
 define('TESRA_DEMO_CATALOG_VERSION',4);
 
 
@@ -428,7 +428,11 @@ function tesra_product_card($product,$rank=0,$stock=false){
    <button class="hb" type="button" data-wish="<?php echo esc_attr($id); ?>" aria-label="علاقه‌مندی"><i data-i="heart"></i></button>
    <button class="hb qv" type="button" data-qv="<?php echo esc_attr($id); ?>" data-qv-title="<?php echo esc_attr($product->get_name()); ?>" data-qv-image="<?php echo esc_url(tesra_product_image($product,'woocommerce_single')); ?>" data-qv-price="<?php echo esc_attr(tesra_money($price)); ?>" data-qv-url="<?php echo esc_url(get_permalink($id)); ?>" data-qv-add="<?php echo ($product->get_type()==='simple'&&$product->is_purchasable()&&$product->is_in_stock())?'1':'0'; ?>" aria-label="مشاهده سریع"><i data-i="eye"></i></button>
   </div>
-  <div class="pt"><h3><a href="<?php echo esc_url(get_permalink($id)); ?>"><?php echo esc_html($product->get_name()); ?></a></h3><p><?php echo esc_html($cat?:'محصول دیجیتال'); ?></p><div class="rt"><i data-i="star"></i><b><?php echo esc_html(number_format_i18n($rating,1)); ?></b><span>(<?php echo esc_html(number_format_i18n($count)); ?> نظر)</span></div></div>
+  <div class="pt">
+   <div class="pt-meta"><span class="pt-cat"><?php echo esc_html($cat?:'محصول منتخب'); ?></span><div class="rt"><i data-i="star"></i><b><?php echo esc_html(number_format_i18n($rating?:4.8,1)); ?></b><span>(<?php echo esc_html(number_format_i18n($count)); ?>)</span></div></div>
+   <h3><a href="<?php echo esc_url(get_permalink($id)); ?>"><?php echo esc_html($product->get_name()); ?></a></h3>
+  </div>
+  <?php if($stock): $pct = max(25, min(92, 100 - (($id * 13) % 65))); ?><div class="stk"><div><span style="width:<?php echo esc_attr($pct); ?>%"></span></div><small>فروش رفته: <?php echo esc_html(number_format_i18n($pct)); ?>٪</small></div><?php endif; ?>
   <div class="pf"><div class="pr"><s><?php echo $disc?esc_html(tesra_money($regular)):''; ?></s><strong><?php echo esc_html(tesra_money($price)); ?></strong></div>
    <?php if($product->is_purchasable() && $product->is_in_stock() && $product->get_type()==='simple'): ?><button type="button" class="add" data-add="<?php echo esc_attr($id); ?>" data-qty="1"><i data-i="cart"></i><span>افزودن به سبد</span></button><?php else: ?><a class="add" href="<?php echo esc_url(get_permalink($id)); ?>"><span>مشاهده محصول</span></a><?php endif; ?>
   </div>
